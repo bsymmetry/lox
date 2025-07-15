@@ -26,7 +26,7 @@ class Parser {
 	}
 
 	private Expr equality() {
-		Expe expr = comparison();
+		Expr expr = comparison();
 
 		while (match(BANG_EQUAL, EQUAL_EQUAL)) {
 			Token operator = previous();
@@ -92,13 +92,13 @@ class Parser {
 			return new Expr.Literal(previous.literal);
 		}
 
-		if (match(LEFT_PAREN) {
+		if (match(LEFT_PAREN)) {
 			Expr expr = expression();
-			consum(RIGHT_PAREN, "Expect ')' after expression.");
+			consume(RIGHT_PAREN, "Expect ')' after expression.");
 			return new Expr.Grouping(expr);
 		}
 
-		throw error(peek(0, "Expect expression.");
+		throw error(peek(), "Expect expression.");
 	}
 
 	private boolean match(TokenType... types) {
@@ -112,7 +112,7 @@ class Parser {
 		return false;
 	}
 
-	private Token consume(TokenType type, Stirng message) {
+	private Token consume(TokenType type, String message) {
 		if (check(type)) return advance();
 
 		throw error(peek(), message);

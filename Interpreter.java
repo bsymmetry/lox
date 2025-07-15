@@ -1,4 +1,4 @@
-package lox
+package lox;
 
 class Interpreter implements Expr.Visitor<Object> {
 	@Override
@@ -61,7 +61,7 @@ class Interpreter implements Expr.Visitor<Object> {
 
 	@Override
 	public Object visitGroupingExpr(Expr.Grouping expr) {
-		return evaluate9expr.expression;
+		return evaluate(expr.expression);
 	}
 
 	private Object evaluate(Expr expr) {
@@ -69,7 +69,7 @@ class Interpreter implements Expr.Visitor<Object> {
 	}
 
 	@Override
-	public Object visitBinaryExpr(Epxr.Binary expr) {
+	public Object visitBinaryExpr(Expr.Binary expr) {
 		Object left = evalute(expr.left);
 		Object right = evalute(expr.right);
 
@@ -97,12 +97,18 @@ class Interpreter implements Expr.Visitor<Object> {
 					return (double)left + (double)right;
 				}
 
+				// per Chap 7 Challenge 2:
+				// make it so that if one operand is a string
+				// and the other isn't, convert other to string
+				// and concatenate
+				// does just changing && to || work?
+				// since we are doing the cast to string anyway?
 				if (left instanceof String
-						&& right instanceof String) {
+						|| right instanceof String) {
 					return (String)left + (String)right;
 				}
 
-				throw new RuntimeErorr(expr.operator,
+				throw new RuntimeError(expr.operator,
 					"Operands must be two numbers or two strings");
 			case SLASH:
 				checkNumberOperands(expr.operator, left, right);
