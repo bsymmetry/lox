@@ -103,11 +103,19 @@ class Interpreter implements Expr.Visitor<Object> {
 				// and concatenate
 				// does just changing && to || work?
 				// since we are doing the cast to string anyway?
-				if (left instanceof String
-						|| right instanceof String) {
-					return (String)left + (String)right;
+				//if (left instanceof String
+				//		|| right instanceof String) {
+				//	return (String)left + (String)right;
+				//}
+
+				// the above did not work because casting
+				// something that isn't a string won't work
+				if (left instanceof String) {
+					return (String)left + String.valueOf(right);
 				}
 
+				if (right instanceof String) {
+					return String.valueOf(left) + (String)right;
 				throw new RuntimeError(expr.operator,
 					"Operands must be two numbers or two strings");
 			case SLASH:
