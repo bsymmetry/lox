@@ -1,6 +1,9 @@
-package lox
+package lox;
 
-class Interpreter implements Expr.Visitor<Object> {
+import java.util.List;
+
+class Interpreter implements Expr.Visitor<Object>, 
+      			     Stmt.Visitor<Void> {
 	@Override
 	public Object visitLiteralExpr(Expr.Literal expr) {
 		return expr.value;
@@ -26,7 +29,7 @@ class Interpreter implements Expr.Visitor<Object> {
 		throw new RuntimeError(operator, "Operand must be a number.");
 	}
 
-	private void checkNumberOperand(Token operator,
+	private void checkNumberOperands(Token operator,
 			Object left, Object right) {
 		if (left instanceof Double && right instanceof Double) return;
 		throw new RuntimeError(operator, "Operands must be numbers.");
@@ -61,17 +64,34 @@ class Interpreter implements Expr.Visitor<Object> {
 
 	@Override
 	public Object visitGroupingExpr(Expr.Grouping expr) {
-		return evaluate9expr.expression;
+		return evaluate(expr.expression);
 	}
 
 	private Object evaluate(Expr expr) {
 		return expr.accept(this);
 	}
 
+	private void execute(Stmt stmt) {
+		stmt.accept(this);
+	}
+
 	@Override
-	public Object visitBinaryExpr(Epxr.Binary expr) {
-		Object left = evalute(expr.left);
-		Object right = evalute(expr.right);
+	public Void visitExpressionStmt(Stmt.Expression stmt) {
+		evaluate(stmt.expression);
+		return null;
+	}
+
+	@Override
+	public Void visitPrintStmt(Stmt.Print stmt) {
+		Object value = evaluate(stmt.expression);
+		System.out.println(stringify(value));
+		return null;
+	}
+
+	@Override
+	public Object visitBinaryExpr(Expr.Binary expr) {
+		Object left = evaluate(expr.left);
+		Object right = evaluate(expr.right);
 
 		switch (expr.operator.type) {
 			case BANG_EQUAL: return !isEqual(left, right);
@@ -102,7 +122,7 @@ class Interpreter implements Expr.Visitor<Object> {
 					return (String)left + (String)right;
 				}
 
-				throw new RuntimeErorr(expr.operator,
+				throw new RuntimeError(expr.operator,
 					"Operands must be two numbers or two strings");
 			case SLASH:
 				checkNumberOperands(expr.operator, left, right);
@@ -113,10 +133,11 @@ class Interpreter implements Expr.Visitor<Object> {
 		}
 	}
 
-	void interpret(Expr expression) {
+	void interpret(List<Stmt> statements) {
 		try {
-			Object value = evaluate(expression);
-			System.out.println(stringify(value));
+			for (Stmt statement : statements) {
+				execute(statement);
+			}
 		} catch (RuntimeError error) {
 			Lox.runtimeError(error);
 		}

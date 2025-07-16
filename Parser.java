@@ -1,5 +1,6 @@
 package lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static lox.TokenType.*;
@@ -13,20 +14,62 @@ class Parser {
 		this.tokens = tokens;
 	}
 
-	Expr parse() {
-		try {
-			return expression();
-		} catch (ParseError error) {
-			return null;
+	List<Stmt> parse() {
+		List<Stmt> statements = new ArrayList<>();
+		while (!isAtEnd()) {
+			statements.add(declaration());
 		}
+
+		return statements;
 	}
 
 	private Expr expression() {
 		return equality();
 	}
 
+	private Stmt declaration() {
+		try {
+			if (match(VAR)) return varDeclaration();
+
+			return statement();
+		} catch (ParseError error) {
+			synchronize();
+			return null;
+		}
+	}
+
+	private Stmt statement() {
+		if (match(PRINT)) return printStatement();
+
+		return expressionStatement();
+	}
+
+	private Stmt printStatement() {
+		Expr value = expression();
+		consume(SEMICOLON, "Expect ';' after value.");
+		return new Stmt.Print(value);
+	}
+
+	private Stmt varDeclaration() {
+		Token name = consume(IDENTIFIER, "Expect variable name.");
+
+		Expr initializer = null;
+		if (match(EQUAL)) {
+			initializer = expression();
+		}
+
+		consume(SEMICOLON, "Expect ';' after variable declaration.");
+		return new Stmt.Var(name, initializer);
+	}
+
+	private Stmt expressionStatement() {
+		Expr expr = expression();
+		consume(SEMICOLON, "Expect ';' after expression.");
+		return new Stmt.Expression(expr);
+	}
+
 	private Expr equality() {
-		Expe expr = comparison();
+		Expr expr = comparison();
 
 		while (match(BANG_EQUAL, EQUAL_EQUAL)) {
 			Token operator = previous();
@@ -89,16 +132,20 @@ class Parser {
 		if (match(NIL)) return new Expr.Literal(null);
 		
 		if (match(NUMBER, STRING)) {
-			return new Expr.Literal(previous.literal);
+			return new Expr.Literal(previous().literal);
 		}
 
-		if (match(LEFT_PAREN) {
+		if (match(IDENTIFIER)) {
+			return new Expr.Variable(previous());
+		}
+
+		if (match(LEFT_PAREN)) {
 			Expr expr = expression();
-			consum(RIGHT_PAREN, "Expect ')' after expression.");
+			consume(RIGHT_PAREN, "Expect ')' after expression.");
 			return new Expr.Grouping(expr);
 		}
 
-		throw error(peek(0, "Expect expression.");
+		throw error(peek(), "Expect expression.");
 	}
 
 	private boolean match(TokenType... types) {
@@ -112,7 +159,7 @@ class Parser {
 		return false;
 	}
 
-	private Token consume(TokenType type, Stirng message) {
+	private Token consume(TokenType type, String message) {
 		if (check(type)) return advance();
 
 		throw error(peek(), message);
@@ -140,7 +187,7 @@ class Parser {
 		return tokens.get(current - 1);
 	}
 
-	private ParseError error(Token toke, String message) {
+	private ParseError error(Token token, String message) {
 		Lox.error(token, message);
 		return new ParseError();
 	}
