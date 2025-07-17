@@ -41,7 +41,12 @@ class Interpreter implements Expr.Visitor<Object>,
 
 	@Override
 	public Object visitVariableExpr(Expr.Variable expr) {
-		return environment.get(expr.name);
+		varName = environment.get(expr.name);
+		if (varName != null)return varName;
+
+		throw new RuntimeError(expr.name,
+				"Variable '" + expr.name.lexeme +
+				"' is not defined");
 	}
 
 	private void checkNumberOperand(Token operator, Object operand) {
